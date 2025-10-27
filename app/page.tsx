@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import Image from 'next/image'
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger)
@@ -14,6 +15,36 @@ export default function Home() {
   const section2Ref = useRef<HTMLDivElement>(null)
   const section3Ref = useRef<HTMLDivElement>(null)
   const section4Ref = useRef<HTMLDivElement>(null)
+  const section5Ref = useRef<HTMLDivElement>(null)
+  const [showNav, setShowNav] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      // Hide nav when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setShowNav(false)
+      } else if (currentScrollY < lastScrollY || currentScrollY < 100) {
+        setShowNav(true)
+      }
+      
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
+
+  const scrollToSection = (section: number) => {
+    const percentages = [0, 25, 50, 70, 85]
+    const height = mainRef.current?.offsetHeight || 1200
+    const targetY = (height * percentages[section - 1]) / 100
+    window.scrollTo({ top: targetY, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -89,25 +120,56 @@ export default function Home() {
           ease: 'power2.in',
           scrollTrigger: {
             trigger: mainRef.current,
-            start: '70%',
-            end: '80%',
+            start: '68%',
+            end: '75%',
             scrub: 1,
           },
         })
       }
 
-      // Section 4 - Contact (slides in from right, stays)
+      // Section 4 - People (rotate in from top)
       if (section4Ref.current) {
-        gsap.set(section4Ref.current, { opacity: 0, x: 200 })
+        gsap.set(section4Ref.current, { opacity: 0, rotationX: -90, transformPerspective: 1000 })
         
+        // Enter animation - rotate in
         gsap.to(section4Ref.current, {
+          rotationX: 0,
+          opacity: 1,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: mainRef.current,
+            start: '70%',
+            end: '80%',
+            scrub: 1,
+          },
+        })
+        
+        // Exit animation - fade out
+        gsap.to(section4Ref.current, {
+          opacity: 0,
+          scale: 0.9,
+          ease: 'power2.in',
+          scrollTrigger: {
+            trigger: mainRef.current,
+            start: '82%',
+            end: '87%',
+            scrub: 1,
+          },
+        })
+      }
+
+      // Section 5 - Contact (slides in from right, stays)
+      if (section5Ref.current) {
+        gsap.set(section5Ref.current, { opacity: 0, x: 200 })
+        
+        gsap.to(section5Ref.current, {
           x: 0,
           opacity: 1,
           ease: 'power2.out',
           scrollTrigger: {
             trigger: mainRef.current,
-            start: '75%',
-            end: '90%',
+            start: '85%',
+            end: '95%',
             scrub: 1,
           },
         })
@@ -120,18 +182,123 @@ export default function Home() {
   return (
     <>
       {/* Scrollable spacer */}
-      <div ref={mainRef} style={{ height: '500vh' }}></div>
+      <div ref={mainRef} style={{ height: '1200vh' }}></div>
 
       {/* Fixed viewport container */}
       <div className="fixed inset-0 overflow-hidden">
         {/* Navigation */}
-        <nav className="absolute top-0 left-0 right-0 z-50 glass-effect">
-          <div className="max-w-7xl mx-auto px-6 py-4">
+        <nav 
+          className={`absolute top-0 left-0 right-0 z-50 glass-effect transition-transform duration-300 ${
+            showNav ? 'translate-y-0' : '-translate-y-full'
+          }`}
+        >
+          <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-gradient">
-                NYU Mei Society
+              <div className="text-lg md:text-2xl font-bold text-gradient">
+                NYU Chinese Mei Society
               </div>
+              
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex items-center gap-4 lg:gap-6">
+                <button 
+                  onClick={() => scrollToSection(1)}
+                  className="text-gray-700 hover:text-primary-600 transition-colors font-semibold"
+                >
+                  Home
+                </button>
+                <button 
+                  onClick={() => scrollToSection(2)}
+                  className="text-gray-700 hover:text-primary-600 transition-colors font-semibold"
+                >
+                  About
+                </button>
+                <button 
+                  onClick={() => scrollToSection(3)}
+                  className="text-gray-700 hover:text-primary-600 transition-colors font-semibold"
+                >
+                  Events
+                </button>
+                <button 
+                  onClick={() => scrollToSection(4)}
+                  className="text-gray-700 hover:text-primary-600 transition-colors font-semibold"
+                >
+                  People
+                </button>
+                <button 
+                  onClick={() => scrollToSection(5)}
+                  className="text-gray-700 hover:text-primary-600 transition-colors font-semibold"
+                >
+                  Contact
+                </button>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden text-gray-700 hover:text-primary-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
+
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+              <div className="md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
+                <div className="flex flex-col gap-4">
+                  <button 
+                    onClick={() => {
+                      scrollToSection(1)
+                      setMobileMenuOpen(false)
+                    }}
+                    className="text-gray-700 hover:text-primary-600 transition-colors font-semibold text-left py-2"
+                  >
+                    Home
+                  </button>
+                  <button 
+                    onClick={() => {
+                      scrollToSection(2)
+                      setMobileMenuOpen(false)
+                    }}
+                    className="text-gray-700 hover:text-primary-600 transition-colors font-semibold text-left py-2"
+                  >
+                    About
+                  </button>
+                  <button 
+                    onClick={() => {
+                      scrollToSection(3)
+                      setMobileMenuOpen(false)
+                    }}
+                    className="text-gray-700 hover:text-primary-600 transition-colors font-semibold text-left py-2"
+                  >
+                    Events
+                  </button>
+                  <button 
+                    onClick={() => {
+                      scrollToSection(4)
+                      setMobileMenuOpen(false)
+                    }}
+                    className="text-gray-700 hover:text-primary-600 transition-colors font-semibold text-left py-2"
+                  >
+                    People
+                  </button>
+                  <button 
+                    onClick={() => {
+                      scrollToSection(5)
+                      setMobileMenuOpen(false)
+                    }}
+                    className="text-gray-700 hover:text-primary-600 transition-colors font-semibold text-left py-2"
+                  >
+                    Contact
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </nav>
 
@@ -148,16 +315,25 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              A vibrant community celebrating Chinese culture and traditions at
-              New York University
+              Founded in 1988 | CMS is one of the largest and oldest running Chinese cultural clubs in NYU.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <button className="px-8 py-4 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-all transform hover:scale-105 shadow-lg">
-                Join Us
-              </button>
-              <button className="px-8 py-4 border-2 border-primary-600 text-primary-600 rounded-full font-semibold hover:bg-primary-600 hover:text-white transition-all">
-                Learn More
-              </button>
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLScOoEH2RMAOoe1VMA-PPr7gkoFAuX3aRCESC_vGqE6jsFtJRw/closedform"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-all transform hover:scale-105 shadow-lg inline-block"
+              >
+                Apply to Eboard
+              </a>
+              <a
+                href="https://engage.nyu.edu/organization/chinese-mei-society-all-university"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 border-2 border-primary-600 text-primary-600 rounded-full font-semibold hover:bg-primary-50 transition-all transform hover:scale-105 inline-block"
+              >
+                Learn more
+              </a>
             </div>
           </div>
         </div>
@@ -167,48 +343,62 @@ export default function Home() {
           ref={section2Ref}
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-white pointer-events-none"
         >
-          <div className="max-w-6xl w-full px-6 py-20">
-            <div className="text-center mb-16">
-              <h2 className="text-5xl md:text-7xl font-bold mb-6 text-gradient">
-                About Our Mission
-              </h2>
-              <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris.
-              </p>
+          <div className="max-w-7xl w-full px-6 py-20">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Left side - Text content */}
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gradient">
+                  About Our Mission
+                </h2>
+                <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
+                  Chinese Mei Society is one of the largest Chinese cultural organizations on campus, dedicated to celebrating and promoting Chinese culture. We host cultural events that give students the opportunity to experience and appreciate Chinese traditions, as well as social events that help students connect, build communities, and find their NYU family. Our events are open to all students—regardless of gender, religion, or ethnicity—and we warmly welcome anyone interested in learning more about Chinese culture
+                </p>
+              </div>
+
+              {/* Right side - Photo Collage */}
+              <div className="grid grid-cols-4 grid-rows-2 gap-4 h-[500px]">
+                {/* Photo 1 - Large left */}
+                <div className="col-span-2 row-span-2 rounded-3xl overflow-hidden shadow-xl group relative">
+                  <Image
+                    src="/1cms.png"
+                    alt="NYU Chinese Mei Society Event"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+
+                {/* Photo 2 - Top right */}
+                <div className="col-span-2 row-span-1 rounded-3xl overflow-hidden shadow-xl group relative">
+                  <Image
+                    src="/2cms.png"
+                    alt="NYU Chinese Mei Society Event"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+
+                {/* Photo 3 - Bottom right small */}
+                <div className="col-span-1 row-span-1 rounded-3xl overflow-hidden shadow-xl group relative">
+                  <Image
+                    src="/3cms.png"
+                    alt="NYU Chinese Mei Society Event"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+
+                {/* Photo 4 - Bottom right small */}
+                <div className="col-span-1 row-span-1 rounded-3xl overflow-hidden shadow-xl group relative">
+                  <Image
+                    src="/4cms.png"
+                    alt="NYU Chinese Mei Society Event"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 mt-12">
-              <div className="bg-white p-8 rounded-3xl shadow-xl">
-                <div className="text-6xl mb-6 text-center">🎌</div>
-                <h3 className="text-2xl font-bold mb-4 text-center">Culture</h3>
-                <p className="text-gray-600 text-center leading-relaxed">
-                  Celebrating rich Chinese traditions and cultural heritage
-                  through festivals and events
-                </p>
-              </div>
-
-              <div className="bg-white p-8 rounded-3xl shadow-xl">
-                <div className="text-6xl mb-6 text-center">🎭</div>
-                <h3 className="text-2xl font-bold mb-4 text-center">Arts</h3>
-                <p className="text-gray-600 text-center leading-relaxed">
-                  Exploring traditional Chinese arts including calligraphy,
-                  music, and dance performances
-                </p>
-              </div>
-
-              <div className="bg-white p-8 rounded-3xl shadow-xl">
-                <div className="text-6xl mb-6 text-center">🤝</div>
-                <h3 className="text-2xl font-bold mb-4 text-center">
-                  Community
-                </h3>
-                <p className="text-gray-600 text-center leading-relaxed">
-                  Building lasting connections and friendships within the NYU
-                  community and beyond
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -280,9 +470,208 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Section 4: Contact - Slides in from right */}
+        {/* Section 4: People - Rotates in from top */}
         <div
           ref={section4Ref}
+          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary-50 pointer-events-none overflow-y-auto"
+        >
+          <div className="max-w-7xl w-full mx-auto px-6 py-24">
+            <div className="text-center mb-12 pt-4">
+              <h2 className="text-4xl md:text-6xl font-bold mb-4 text-gradient">
+                Meet Our People
+              </h2>
+              <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                Dedicated individuals bringing our community together
+              </p>
+            </div>
+
+            {/* Executive Board */}
+            <div className="mb-12">
+              <h3 className="text-2xl md:text-3xl font-bold mb-6 text-center text-gray-800">
+                Executive Board
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-3xl">
+                    👨‍💼
+                  </div>
+                  <h4 className="font-bold text-base mb-1">James Chen</h4>
+                  <p className="text-primary-600 font-semibold text-sm mb-1">President</p>
+                  <p className="text-gray-500 text-xs">Class of 2025</p>
+                </div>
+                
+                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-3xl">
+                    👩‍💼
+                  </div>
+                  <h4 className="font-bold text-base mb-1">Sarah Liu</h4>
+                  <p className="text-primary-600 font-semibold text-sm mb-1">Vice President</p>
+                  <p className="text-gray-500 text-xs">Class of 2025</p>
+                </div>
+                
+                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-primary-500 to-red-500 flex items-center justify-center text-3xl">
+                    👨
+                  </div>
+                  <h4 className="font-bold text-base mb-1">David Wong</h4>
+                  <p className="text-primary-600 font-semibold text-sm mb-1">Treasurer</p>
+                  <p className="text-gray-500 text-xs">Class of 2026</p>
+                </div>
+                
+                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-accent-500 to-primary-400 flex items-center justify-center text-3xl">
+                    👩
+                  </div>
+                  <h4 className="font-bold text-base mb-1">Emily Zhang</h4>
+                  <p className="text-primary-600 font-semibold text-sm mb-1">Secretary</p>
+                  <p className="text-gray-500 text-xs">Class of 2026</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Teams Grid */}
+            <div className="grid md:grid-cols-2 gap-6 mb-12">
+              {/* Events Team */}
+              <div className="bg-white rounded-2xl p-6 shadow-xl">
+                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                  Events Team
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center text-xl flex-shrink-0">
+                      👨‍🎓
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Michael Wang</h4>
+                      <p className="text-xs text-primary-600">Events Director</p>
+                      <p className="text-xs text-gray-500">Class of 2025</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-400 to-primary-400 flex items-center justify-center text-xl flex-shrink-0">
+                      👩‍🎓
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Lisa Chen</h4>
+                      <p className="text-xs text-primary-600">Events Coordinator</p>
+                      <p className="text-xs text-gray-500">Class of 2026</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Logistics Team */}
+              <div className="bg-white rounded-2xl p-6 shadow-xl">
+                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                  Logistics Team
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-primary-500 flex items-center justify-center text-xl flex-shrink-0">
+                      👨‍💻
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Kevin Lin</h4>
+                      <p className="text-xs text-primary-600">Logistics Head</p>
+                      <p className="text-xs text-gray-500">Class of 2025</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-accent-400 flex items-center justify-center text-xl flex-shrink-0">
+                      👩‍💻
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Amy Xu</h4>
+                      <p className="text-xs text-primary-600">Operations Manager</p>
+                      <p className="text-xs text-gray-500">Class of 2026</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Graphics Team */}
+              <div className="bg-white rounded-2xl p-6 shadow-xl">
+                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                  Graphics Team
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-500 to-red-400 flex items-center justify-center text-xl flex-shrink-0">
+                      👨‍🎨
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Jason Zhou</h4>
+                      <p className="text-xs text-primary-600">Design Lead</p>
+                      <p className="text-xs text-gray-500">Class of 2025</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-red-500 flex items-center justify-center text-xl flex-shrink-0">
+                      👩‍🎨
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Jessica Yang</h4>
+                      <p className="text-xs text-primary-600">Graphic Designer</p>
+                      <p className="text-xs text-gray-500">Class of 2027</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Marketing Team */}
+              <div className="bg-white rounded-2xl p-6 shadow-xl">
+                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                  Marketing Team
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-xl flex-shrink-0">
+                      👨‍💼
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Ryan Lee</h4>
+                      <p className="text-xs text-primary-600">Marketing Director</p>
+                      <p className="text-xs text-gray-500">Class of 2025</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-400 to-primary-600 flex items-center justify-center text-xl flex-shrink-0">
+                      👩‍💼
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm">Sophia Huang</h4>
+                      <p className="text-xs text-primary-600">Social Media Lead</p>
+                      <p className="text-xs text-gray-500">Class of 2026</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Senior Advisor */}
+            <div className="text-center pb-8">
+              <h3 className="text-2xl font-bold mb-6 text-gray-800">
+                Senior Advisor
+              </h3>
+              <div className="inline-block bg-white rounded-2xl p-6 shadow-xl">
+                <div className="w-24 h-24 mx-auto mb-3 rounded-full bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-4xl">
+                  👨‍🏫
+                </div>
+                <h4 className="font-bold text-xl mb-1">Professor Wei Chen</h4>
+                <p className="text-primary-600 font-semibold mb-1">Senior Advisor</p>
+                <p className="text-gray-500 text-sm">Faculty Mentor</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 5: Contact - Slides in from right */}
+        <div
+          ref={section5Ref}
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-600 to-accent-600 text-white pointer-events-none"
         >
           <div className="max-w-5xl w-full text-center px-6 py-20">
