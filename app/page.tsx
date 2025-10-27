@@ -74,6 +74,8 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [aspectRatios, setAspectRatios] = useState<number[]>([16/9, 16/9, 16/9, 16/9])
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -145,6 +147,33 @@ export default function Home() {
     const height = mainRef.current?.offsetHeight || 1200
     const targetY = (height * percentages[section - 1]) / 100
     window.scrollTo({ top: targetY, behavior: 'smooth' })
+  }
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+    
+    if (isLeftSwipe) {
+      setCurrentSlide((prev) => (prev + 1) % 4)
+    }
+    if (isRightSwipe) {
+      setCurrentSlide((prev) => (prev - 1 + 4) % 4)
+    }
   }
 
   useEffect(() => {
@@ -279,7 +308,7 @@ export default function Home() {
         gsap.set(section5Ref.current, { opacity: 0, x: 200 })
         
         gsap.to(section5Ref.current, {
-          x: 0,
+          x: -8,
           opacity: 1,
           ease: 'power2.out',
           scrollTrigger: {
@@ -433,22 +462,22 @@ export default function Home() {
           ref={section1Ref}
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white via-primary-50 to-accent-50"
         >
-          <div className="max-w-5xl w-full text-center px-6">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+          <div className="max-w-5xl w-full text-center px-4 sm:px-6">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-tight">
               Welcome to{' '}
               <span className="text-gradient block mt-2">
                 NYU Chinese Mei Society
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-base sm:text-xl md:text-2xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-2">
               Founded in 1988 | CMS is one of the largest and oldest running Chinese cultural clubs in NYU.
             </p>
-            <div className="flex gap-4 justify-center flex-wrap">
+            <div className="flex gap-3 sm:gap-4 justify-center flex-wrap px-4">
               <a
                 href="https://docs.google.com/forms/d/e/1FAIpQLScOoEH2RMAOoe1VMA-PPr7gkoFAuX3aRCESC_vGqE6jsFtJRw/closedform"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-all transform hover:scale-105 shadow-lg inline-block"
+                className="px-6 py-3 sm:px-8 sm:py-4 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-all transform hover:scale-105 active:scale-95 shadow-lg inline-block text-sm sm:text-base"
               >
                 Apply to Eboard
               </a>
@@ -456,7 +485,7 @@ export default function Home() {
                 href="https://engage.nyu.edu/organization/chinese-mei-society-all-university"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 border-2 border-primary-600 text-primary-600 rounded-full font-semibold hover:bg-primary-50 transition-all transform hover:scale-105 inline-block"
+                className="px-6 py-3 sm:px-8 sm:py-4 border-2 border-primary-600 text-primary-600 rounded-full font-semibold hover:bg-primary-50 transition-all transform hover:scale-105 active:scale-95 inline-block text-sm sm:text-base"
               >
                 Learn more
               </a>
@@ -467,24 +496,24 @@ export default function Home() {
         {/* Section 2: About - Slides up from bottom, scales down to exit */}
         <div
           ref={section2Ref}
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-white pointer-events-none"
+          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-white pointer-events-none overflow-y-auto scrollbar-hide"
         >
-          <div className="max-w-7xl w-full px-6 py-20">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
               {/* Left side - Text content */}
-              <div>
-                <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gradient">
+              <div className="order-2 md:order-1">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-gradient">
                   About Our Mission
                 </h2>
-                <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed">
                   Chinese Mei Society is one of the largest Chinese cultural organizations on campus, dedicated to celebrating and promoting Chinese culture. We host cultural events that give students the opportunity to experience and appreciate Chinese traditions, as well as social events that help students connect, build communities, and find their NYU family. Our events are open to all students—regardless of gender, religion, or ethnicity—and we warmly welcome anyone interested in learning more about Chinese culture
                 </p>
               </div>
 
               {/* Right side - Photo Collage */}
-              <div className="grid grid-cols-4 grid-rows-2 gap-4 h-[500px]">
+              <div className="order-1 md:order-2 grid grid-cols-4 grid-rows-2 gap-2 sm:gap-3 md:gap-4 h-[250px] sm:h-[350px] md:h-[500px]">
                 {/* Photo 1 - Large left */}
-                <div className="col-span-2 row-span-2 rounded-3xl overflow-hidden shadow-xl group relative">
+                <div className="col-span-2 row-span-2 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl group relative">
                   <Image
                     src="/1cms.png"
                     alt="NYU Chinese Mei Society Event"
@@ -494,7 +523,7 @@ export default function Home() {
                 </div>
 
                 {/* Photo 2 - Top right */}
-                <div className="col-span-2 row-span-1 rounded-3xl overflow-hidden shadow-xl group relative">
+                <div className="col-span-2 row-span-1 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl group relative">
                   <Image
                     src="/2cms.png"
                     alt="NYU Chinese Mei Society Event"
@@ -504,7 +533,7 @@ export default function Home() {
                 </div>
 
                 {/* Photo 3 - Bottom right small */}
-                <div className="col-span-1 row-span-1 rounded-3xl overflow-hidden shadow-xl group relative">
+                <div className="col-span-1 row-span-1 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl group relative">
                   <Image
                     src="/3cms.png"
                     alt="NYU Chinese Mei Society Event"
@@ -514,7 +543,7 @@ export default function Home() {
                 </div>
 
                 {/* Photo 4 - Bottom right small */}
-                <div className="col-span-1 row-span-1 rounded-3xl overflow-hidden shadow-xl group relative">
+                <div className="col-span-1 row-span-1 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl group relative">
                   <Image
                     src="/4cms.png"
                     alt="NYU Chinese Mei Society Event"
@@ -533,12 +562,12 @@ export default function Home() {
           ref={section3Ref}
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white to-accent-50 pointer-events-none"
         >
-          <div className="max-w-7xl w-full px-6 py-20 pointer-events-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-5xl md:text-7xl font-bold mb-6 text-gradient">
+          <div className="max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20 pointer-events-auto">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 text-gradient">
                 Our Events
               </h2>
-              <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-base sm:text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto px-4">
                 Join us for exciting events celebrating Chinese culture
                 throughout the year
               </p>
@@ -549,11 +578,14 @@ export default function Home() {
               <div className="relative max-w-5xl w-full">
                 {/* Main Image Display */}
                 <div 
-                  className="relative rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 w-full"
+                  className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 w-full touch-pan-y"
                   style={{
                     aspectRatio: aspectRatios[currentSlide] || 16/9,
                     maxHeight: '600px'
                   }}
+                  onTouchStart={onTouchStart}
+                  onTouchMove={onTouchMove}
+                  onTouchEnd={onTouchEnd}
                 >
                   {[2, 3, 4, 5].map((imageNum, index) => (
                     <div
@@ -575,20 +607,20 @@ export default function Home() {
                   {/* Navigation Arrows */}
                   <button
                     onClick={() => setCurrentSlide((prev) => (prev - 1 + 4) % 4)}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 z-10"
+                    className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 z-10"
                     aria-label="Previous slide"
                   >
-                    <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
                   
                   <button
                     onClick={() => setCurrentSlide((prev) => (prev + 1) % 4)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 z-10"
+                    className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 z-10"
                     aria-label="Next slide"
                   >
-                    <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
@@ -596,15 +628,15 @@ export default function Home() {
               </div>
 
               {/* Dots Indicator */}
-              <div className="flex justify-center gap-3 mt-6">
+              <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
                 {[2, 3, 4, 5].map((imageNum, index) => (
                   <button
                     key={imageNum}
                     onClick={() => setCurrentSlide(index)}
                     className={`transition-all duration-300 rounded-full ${
                       currentSlide === index
-                        ? 'w-12 h-3 bg-primary-600'
-                        : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                        ? 'w-8 sm:w-12 h-2 sm:h-3 bg-primary-600'
+                        : 'w-2 sm:w-3 h-2 sm:h-3 bg-gray-300 hover:bg-gray-400'
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />
@@ -619,25 +651,25 @@ export default function Home() {
           ref={section4Ref}
           className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary-50 pointer-events-none flex items-center justify-center overflow-hidden"
         >
-          <div className="max-w-7xl w-full mx-auto px-6 py-24 scale-90 md:scale-100 max-h-full overflow-y-auto pointer-events-auto scrollbar-hide">
-            <div className="text-center mb-12 pt-4">
-              <h2 className="text-4xl md:text-6xl font-bold mb-4 text-gradient">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-12 sm:py-24 scale-90 md:scale-100 max-h-full overflow-y-auto pointer-events-auto scrollbar-hide">
+            <div className="text-center mb-8 sm:mb-12 pt-2 sm:pt-4">
+              <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-3 sm:mb-4 text-gradient">
                 Meet Our People
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto px-4">
                 Dedicated individuals bringing our community together
               </p>
             </div>
 
             {/* Executive Board */}
-            <div className="mb-12">
-              <h3 className="text-2xl md:text-3xl font-bold mb-6 text-center text-gray-800">
+            <div className="mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center text-gray-800">
                 Executive Board
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {executiveBoard.map((person, index) => (
-                  <div key={index} className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                    <div className="w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-500">
+                  <div key={index} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg text-center">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-500">
                       <Image
                         src={`/${person.picture}`}
                         alt={person.name}
@@ -645,8 +677,8 @@ export default function Home() {
                         className="object-cover"
                       />
                     </div>
-                    <h4 className="font-bold text-base mb-1">{person.name}</h4>
-                    <p className="text-primary-600 font-semibold text-sm mb-1">{person.title}</p>
+                    <h4 className="font-bold text-sm sm:text-base mb-1">{person.name}</h4>
+                    <p className="text-primary-600 font-semibold text-xs sm:text-sm mb-1">{person.title}</p>
                     <p className="text-gray-500 text-xs">{person.school}</p>
                   </div>
                 ))}
@@ -654,18 +686,18 @@ export default function Home() {
             </div>
 
             {/* Teams Grid and Senior Advisor */}
-            <div className="grid lg:grid-cols-3 gap-6 mb-12">
+            <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
               {/* Teams Grid */}
-              <div className="lg:col-span-2 grid md:grid-cols-2 gap-6">
+              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {/* Events Team */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl">
-                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
+                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
                     Events Team
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {eventsTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-400 flex-shrink-0">
+                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-400 flex-shrink-0">
                           <Image
                             src={`/${person.picture}`}
                             alt={person.name}
@@ -674,7 +706,7 @@ export default function Home() {
                           />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
                           <p className="text-xs text-primary-600">{person.title}</p>
                           <p className="text-xs text-gray-500">{person.school}</p>
                         </div>
@@ -684,14 +716,14 @@ export default function Home() {
                 </div>
 
                 {/* Logistics Team */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl">
-                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
+                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
                     Logistics Team
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {logisticsTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-red-400 to-primary-500 flex-shrink-0">
+                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-red-400 to-primary-500 flex-shrink-0">
                           <Image
                             src={`/${person.picture}`}
                             alt={person.name}
@@ -700,7 +732,7 @@ export default function Home() {
                           />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
                           <p className="text-xs text-primary-600">{person.title}</p>
                           <p className="text-xs text-gray-500">{person.school}</p>
                         </div>
@@ -710,16 +742,16 @@ export default function Home() {
                 </div>
 
                 {/* Graphics Team */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl">
-                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
+                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
                     Graphics Team
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {graphicsTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-accent-500 to-red-400 flex-shrink-0">
+                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-accent-500 to-red-400 flex-shrink-0">
                           {noPicturePeople.has(person.name) ? (
-                            <div className="w-full h-full flex items-center justify-center text-2xl">
+                            <div className="w-full h-full flex items-center justify-center text-xl sm:text-2xl">
                               👤
                             </div>
                           ) : (
@@ -732,7 +764,7 @@ export default function Home() {
                           )}
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
                           <p className="text-xs text-primary-600">{person.title}</p>
                           <p className="text-xs text-gray-500">{person.school}</p>
                         </div>
@@ -742,14 +774,14 @@ export default function Home() {
                 </div>
 
                 {/* Marketing Team */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl">
-                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
+                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
                     Marketing Team
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {marketingTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-500 to-accent-500 flex-shrink-0">
+                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-500 to-accent-500 flex-shrink-0">
                           <Image
                             src={`/${person.picture}`}
                             alt={person.name}
@@ -758,7 +790,7 @@ export default function Home() {
                           />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
                           <p className="text-xs text-primary-600">{person.title}</p>
                           <p className="text-xs text-gray-500">{person.school}</p>
                         </div>
@@ -770,16 +802,16 @@ export default function Home() {
 
               {/* Senior Advisor */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl p-6 shadow-xl h-full">
-                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl h-full">
+                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
                     Senior Advisors
                   </h3>
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {seniorAdvisors.map((person, index) => (
                       <div key={index} className="flex flex-col items-center">
-                        <div className="w-24 h-24 mb-4 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-600 to-accent-600">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 mb-3 sm:mb-4 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-600 to-accent-600">
                           {noPicturePeople.has(person.name) ? (
-                            <div className="w-full h-full flex items-center justify-center text-5xl">
+                            <div className="w-full h-full flex items-center justify-center text-4xl sm:text-5xl">
                               👤
                             </div>
                           ) : (
@@ -791,9 +823,9 @@ export default function Home() {
                             />
                           )}
                         </div>
-                        <h4 className="font-bold text-lg mb-1">{person.name}</h4>
-                        <p className="text-primary-600 font-semibold mb-1">{person.title}</p>
-                        <p className="text-gray-500 text-sm">{person.school}</p>
+                        <h4 className="font-bold text-base sm:text-lg mb-1">{person.name}</h4>
+                        <p className="text-primary-600 font-semibold text-sm sm:text-base mb-1">{person.title}</p>
+                        <p className="text-gray-500 text-xs sm:text-sm">{person.school}</p>
                       </div>
                     ))}
                   </div>
@@ -806,23 +838,24 @@ export default function Home() {
         {/* Section 5: Contact - Slides in from right */}
         <div
           ref={section5Ref}
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-600 to-accent-600 text-white pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-br from-primary-600 to-accent-600 text-white pointer-events-none overflow-y-auto scrollbar-hide"
         >
-          <div className="max-w-5xl w-full text-center px-6 py-20">
-            <h2 className="text-5xl md:text-7xl font-bold mb-8">
+          <div className="min-h-full flex items-start md:items-center justify-center py-16 sm:py-20">
+            <div className="max-w-5xl w-full text-center px-4 sm:px-6">
+            <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 sm:mb-8">
               Join Our Community
             </h2>
-            <p className="text-xl md:text-2xl mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl md:text-2xl mb-8 sm:mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed px-4">
               Whether you're interested in Chinese culture or simply want to make
               new friends, we welcome you to join NYU Chinese Mei Society.
             </p>
 
-            <div className="grid md:grid-cols-3 gap-8 mb-12 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12 max-w-4xl mx-auto">
               <a 
                 href="https://www.instagram.com/nyucms/?hl=en"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-2xl overflow-hidden h-64 hover:scale-105 transition-all cursor-pointer shadow-xl"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-48 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -832,10 +865,10 @@ export default function Home() {
                     className="object-cover"
                   />
                 </div>
-                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-6">
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 sm:pb-6">
                   <div>
-                    <h3 className="text-xl font-bold mb-1 text-center text-white">Instagram</h3>
-                    <p className="text-white/90 text-center">@nyucms</p>
+                    <h3 className="text-lg sm:text-xl font-bold mb-1 text-center text-white">Instagram</h3>
+                    <p className="text-sm sm:text-base text-white/90 text-center">@nyucms</p>
                   </div>
                 </div>
               </a>
@@ -844,7 +877,7 @@ export default function Home() {
                 href="https://www.tiktok.com/@cms.nyu?lang=en"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-2xl overflow-hidden h-64 hover:scale-105 transition-all cursor-pointer shadow-xl"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-48 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -854,10 +887,10 @@ export default function Home() {
                     className="object-cover"
                   />
                 </div>
-                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-6">
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 sm:pb-6">
                   <div>
-                    <h3 className="text-xl font-bold mb-1 text-center text-white">TikTok</h3>
-                    <p className="text-white/90 text-center">@cms.nyu</p>
+                    <h3 className="text-lg sm:text-xl font-bold mb-1 text-center text-white">TikTok</h3>
+                    <p className="text-sm sm:text-base text-white/90 text-center">@cms.nyu</p>
                   </div>
                 </div>
               </a>
@@ -866,7 +899,7 @@ export default function Home() {
                 href="https://engage.nyu.edu/organization/chinese-mei-society-all-university"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-2xl overflow-hidden h-64 hover:scale-105 transition-all cursor-pointer shadow-xl"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-48 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -876,10 +909,10 @@ export default function Home() {
                     className="object-cover"
                   />
                 </div>
-                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-6">
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 sm:pb-6">
                   <div>
-                    <h3 className="text-xl font-bold mb-1 text-center text-white">NYU Engage</h3>
-                    <p className="text-white/90 text-center">NYU Engage</p>
+                    <h3 className="text-lg sm:text-xl font-bold mb-1 text-center text-white">NYU Engage</h3>
+                    <p className="text-sm sm:text-base text-white/90 text-center">NYU Engage</p>
                   </div>
                 </div>
               </a>
@@ -887,26 +920,25 @@ export default function Home() {
 
             <a 
               href="mailto:cms.nyu@gmail.com"
-              className="px-12 py-6 bg-white text-primary-600 rounded-full text-xl font-bold hover:scale-105 transition-all shadow-2xl pointer-events-auto inline-block"
+              className="px-8 py-4 sm:px-12 sm:py-6 bg-white text-primary-600 rounded-full text-base sm:text-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl pointer-events-auto inline-block"
             >
               Get in Touch
             </a>
 
-            <div className="mt-16 pt-8 border-t border-white/20 space-y-6">
-              {/* Self Plug */}
-              <div className="flex items-center justify-center gap-4">
-                <span className="text-white/70 text-sm md:text-base">Website built by</span>
-                <span className="text-white font-semibold text-base md:text-lg">Matt Cao</span>
-                <span className="text-white/70 text-sm md:text-base">reach me here: </span>
+            <div className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-white/20 space-y-4 sm:space-y-6">
+              <div className="flex flex-row sm:flex-row items-center justify-center gap-2 sm:gap-4">
+                <span className="text-white/70 text-xs sm:text-sm md:text-base">Website built by</span>
+                <span className="text-white font-semibold text-sm sm:text-base md:text-lg">Matt Cao</span>
+                <span className="text-white/70 text-xs sm:text-sm md:text-base">reach me here: </span>
                 <a 
                   href="https://www.linkedin.com/in/caomatt" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-block hover:scale-110 transition-all duration-300 pointer-events-auto"
+                  className="inline-block hover:scale-110 active:scale-95 transition-all duration-300 pointer-events-auto"
                   aria-label="Matt Cao's LinkedIn"
                 >
                   <svg 
-                    className="w-8 h-8 text-white" 
+                    className="w-6 h-6 sm:w-8 sm:h-8 text-white" 
                     fill="currentColor" 
                     viewBox="0 0 24 24"
                     aria-hidden="true"
@@ -915,11 +947,7 @@ export default function Home() {
                   </svg>
                 </a>
               </div>
-              
-              {/* Copyright */}
-              <p className="text-white/40 text-sm text-center pb-6">
-                © 2025 NYU Chinese Mei Society. All rights reserved.
-              </p>
+            </div>
             </div>
           </div>
         </div>
