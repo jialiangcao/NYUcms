@@ -9,6 +9,58 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger)
 }
 
+// People data arrays
+const executiveBoard = [
+  { name: 'Serena Chen', title: 'President', school: 'CAS 2027', picture: 'serenachen.jpg' },
+  { name: 'Anji Zhou', title: 'President', school: 'CAS 2027', picture: 'anjizhou.jpg' },
+  { name: 'Stella Lin', title: 'Vice President', school: 'CAS 2026', picture: 'stellalin.png' },
+  { name: 'Steven Lo', title: 'Vice President', school: 'Tandon 2026', picture: 'stevenlo.jpeg' },
+]
+
+const eventsTeam = [
+  { name: 'Annie Soon', title: 'Events Director', school: 'CAS 2027', picture: 'anniesoon.jpeg' },
+  { name: 'Gary Li', title: 'Events Team', school: 'CAS 2028', picture: 'garyli.jpeg' },
+  { name: 'Jonathan Chen', title: 'Events Team', school: 'CAS 2026', picture: 'jonathanchen.jpeg' },
+  { name: 'John Zhang', title: 'Events Team', school: 'Stern 2028', picture: 'johnzhang.jpeg' },
+  { name: 'Alyssa Chen', title: 'Events Team', school: 'Tandon 2028', picture: 'alyssachen.jpeg' },
+  { name: 'Emily Ma', title: 'Events Team', school: 'Meyers 2029', picture: 'emilyma.png' },
+]
+
+const logisticsTeam = [
+  { name: 'Hoi Chan', title: 'Logistics Director', school: 'CAS 2028', picture: 'hoichan.jpg' },
+  { name: 'Michael Liu', title: 'Logistics Director', school: 'Tandon 2027', picture: 'michaelliu.jpg' },
+  { name: 'Michelle Li', title: 'Secretary', school: 'CAS 2028', picture: 'michelleli.jpeg' },
+  { name: 'Evan Li', title: 'Treasurer', school: 'Stern 2027', picture: 'evanli.jpg' },
+  { name: 'Melody Wang', title: 'Logistics Team', school: 'Stern 2028', picture: 'melodywang.png' },
+]
+
+const graphicsTeam = [
+  { name: 'Mike Chen', title: 'Graphics Team', school: 'Stern 2027', picture: 'mikechen.webp' },
+  { name: 'Emma Wang', title: 'Graphics Team', school: 'Steinhardt 2028', picture: 'emmawang.webp' },
+  { name: 'Ayden Lui', title: 'Graphics Team', school: 'CAS 2028', picture: 'aydenlui.png' }, // no picture
+]
+
+const marketingTeam = [
+  { name: 'Alyssa Meng', title: 'Marketing Director', school: 'CAS 2026', picture: 'alyssameng.webp' },
+  { name: 'Kyra Li', title: 'Marketing Director', school: 'Tisch 2027', picture: 'kyrali.webp' },
+  { name: 'Kelly Yang', title: 'Marketing Team', school: 'Gallatin 2028', picture: 'kellyyang.webp' },
+  { name: 'Lester Wu', title: 'Marketing Team', school: 'Steinhardt 2027', picture: 'lesterwu.webp' },
+  { name: 'Mona Zhao', title: 'Marketing Team', school: 'CAS 2028', picture: 'monazhao.webp' },
+  { name: 'Kai Yuen', title: 'Marketing Team', school: 'Tandon 2028', picture: 'kaiyuen.webp' },
+]
+
+const seniorAdvisors = [
+  { name: 'Isabel Ting', title: 'Senior Advisor', school: 'CAS 2026', picture: 'isabelting.webp' },
+  { name: 'Saranna Zhang', title: 'Senior Advisor', school: 'CAS 2026', picture: 'sarannazhang.webp' },
+  { name: 'Harry Chen', title: 'Senior Advisor', school: 'SPS 2026', picture: 'harrychen.webp' },
+  { name: 'David Liu', title: 'Senior Advisor', school: 'Tisch 2026', picture: 'davidliu.png' }, // no picture
+  { name: 'Joyce Shi', title: 'Senior Advisor', school: 'CAS 2026', picture: 'joyceshi.png' }, // no picture
+  { name: 'Jun Yan Lu', title: 'Senior Advisor', school: 'Stern 2026', picture: 'junyanlu.png' }, // no picture
+]
+
+// People without pictures - will show emoji placeholder
+const noPicturePeople = new Set(['Ayden Lui', 'David Liu', 'Joyce Shi', 'Jun Yan Lu'])
+
 export default function Home() {
   const mainRef = useRef<HTMLDivElement>(null)
   const section1Ref = useRef<HTMLDivElement>(null)
@@ -19,16 +71,32 @@ export default function Home() {
   const [showNav, setShowNav] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [aspectRatios, setAspectRatios] = useState<number[]>([16/9, 16/9, 16/9, 16/9])
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true)
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
+      const maxScroll = mainRef.current?.offsetHeight || 1200
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
       
+      // Hide nav when at bottom of page
+      if (currentScrollY >= scrollableHeight - 50) {
+        setShowNav(false)
+      }
       // Hide nav when scrolling down, show when scrolling up
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setShowNav(false)
       } else if (currentScrollY < lastScrollY || currentScrollY < 100) {
         setShowNav(true)
+      }
+      
+      // Hide scroll indicator after leaving homepage (after ~10% of scroll)
+      if (currentScrollY > maxScroll * 0.1) {
+        setShowScrollIndicator(false)
+      } else {
+        setShowScrollIndicator(true)
       }
       
       setLastScrollY(currentScrollY)
@@ -39,8 +107,41 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
 
+  // Load image aspect ratios
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    
+    const imagePaths = [2, 3, 4, 5]
+    const loadAspectRatios = async () => {
+      const ratios = await Promise.all(
+        imagePaths.map((num) => {
+          return new Promise<number>((resolve) => {
+            const img = new window.Image()
+            img.onload = () => {
+              resolve(img.width / img.height)
+            }
+            img.onerror = () => resolve(16 / 9) // fallback
+            img.src = `/event${num}.png`
+          })
+        })
+      )
+      setAspectRatios(ratios)
+    }
+    loadAspectRatios()
+  }, [])
+
+  // Auto-play carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % 4)
+    }, 4000) // Change slide every 4 seconds
+
+    return () => clearInterval(interval)
+  }, [])
+
   const scrollToSection = (section: number) => {
-    const percentages = [0, 25, 50, 70, 85]
+    // Target positions where each section is fully visible and stable
+    const percentages = [5, 30, 62, 78, 90]
     const height = mainRef.current?.offsetHeight || 1200
     const targetY = (height * percentages[section - 1]) / 100
     window.scrollTo({ top: targetY, behavior: 'smooth' })
@@ -127,13 +228,28 @@ export default function Home() {
         })
       }
 
-      // Section 4 - People (rotate in from top)
+      // Section 4 - People (slides in from bottom with flip effect)
       if (section4Ref.current) {
-        gsap.set(section4Ref.current, { opacity: 0, rotationX: -90, transformPerspective: 1000 })
+        gsap.set(section4Ref.current, { opacity: 0, y: 100, rotationY: 45 })
         
-        // Enter animation - rotate in
+        // Reset scroll position when entering
+        ScrollTrigger.create({
+          trigger: mainRef.current,
+          start: '70%',
+          end: '71%',
+          onEnter: () => {
+            // Find the scrollable container and reset its scroll position
+            const scrollableContainer = section4Ref.current?.querySelector('.overflow-y-auto')
+            if (scrollableContainer) {
+              scrollableContainer.scrollTop = 0
+            }
+          },
+        })
+        
+        // Enter animation - slide up with flip
         gsap.to(section4Ref.current, {
-          rotationX: 0,
+          y: 0,
+          rotationY: 0,
           opacity: 1,
           ease: 'power2.out',
           scrollTrigger: {
@@ -194,8 +310,18 @@ export default function Home() {
         >
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="text-lg md:text-2xl font-bold text-gradient">
-                NYU Chinese Mei Society
+              <div className="flex items-center gap-3">
+                <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
+                  <Image
+                    src="/cmslogo.png"
+                    alt="NYU Chinese Mei Society Logo"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-lg md:text-2xl font-bold text-gradient">
+                  NYU Chinese Mei Society
+                </span>
               </div>
               
               {/* Desktop Navigation */}
@@ -407,10 +533,10 @@ export default function Home() {
           ref={section3Ref}
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white to-accent-50 pointer-events-none"
         >
-          <div className="max-w-7xl w-full px-6 py-20">
-            <div className="text-center mb-16">
+          <div className="max-w-7xl w-full px-6 py-20 pointer-events-auto">
+            <div className="text-center mb-12">
               <h2 className="text-5xl md:text-7xl font-bold mb-6 text-gradient">
-                Cultural Events & Workshops
+                Our Events
               </h2>
               <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
                 Join us for exciting events celebrating Chinese culture
@@ -418,53 +544,71 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <div className="h-56 bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-8xl">
-                  🎏
-                </div>
-                <div className="p-8">
-                  <div className="text-primary-600 font-semibold mb-2">
-                    Spring Season
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3">Spring Festival</h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    Join us for traditional dragon dances, lantern displays, and
-                    delicious Chinese cuisine to celebrate the Lunar New Year.
-                  </p>
+            {/* Carousel Container */}
+            <div className="flex flex-col items-center">
+              <div className="relative max-w-5xl w-full">
+                {/* Main Image Display */}
+                <div 
+                  className="relative rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 w-full"
+                  style={{
+                    aspectRatio: aspectRatios[currentSlide] || 16/9,
+                    maxHeight: '600px'
+                  }}
+                >
+                  {[2, 3, 4, 5].map((imageNum, index) => (
+                    <div
+                      key={imageNum}
+                      className={`absolute inset-0 transition-opacity duration-500 ${
+                        currentSlide === index ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    >
+                      <Image
+                        src={`/event${imageNum}.png`}
+                        alt={`Event ${imageNum}`}
+                        fill
+                        className="object-contain"
+                        priority={imageNum === 2}
+                      />
+                    </div>
+                  ))}
+
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev - 1 + 4) % 4)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 z-10"
+                    aria-label="Previous slide"
+                  >
+                    <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev + 1) % 4)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 z-10"
+                    aria-label="Next slide"
+                  >
+                    <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <div className="h-56 bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center text-8xl">
-                  🎨
-                </div>
-                <div className="p-8">
-                  <div className="text-accent-600 font-semibold mb-2">
-                    Monthly Workshops
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3">Calligraphy Class</h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    Learn the ancient art of Chinese calligraphy from master
-                    artists. All materials provided for beginners.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <div className="h-56 bg-gradient-to-br from-primary-400 to-accent-600 flex items-center justify-center text-8xl">
-                  🍜
-                </div>
-                <div className="p-8">
-                  <div className="text-primary-600 font-semibold mb-2">
-                    Social Events
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3">Dumpling Night</h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    Join us for an evening of making traditional Chinese
-                    dumplings and learning about their cultural significance.
-                  </p>
-                </div>
+              {/* Dots Indicator */}
+              <div className="flex justify-center gap-3 mt-6">
+                {[2, 3, 4, 5].map((imageNum, index) => (
+                  <button
+                    key={imageNum}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`transition-all duration-300 rounded-full ${
+                      currentSlide === index
+                        ? 'w-12 h-3 bg-primary-600'
+                        : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -473,9 +617,9 @@ export default function Home() {
         {/* Section 4: People - Rotates in from top */}
         <div
           ref={section4Ref}
-          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary-50 pointer-events-none overflow-y-auto"
+          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary-50 pointer-events-none flex items-center justify-center overflow-hidden"
         >
-          <div className="max-w-7xl w-full mx-auto px-6 py-24">
+          <div className="max-w-7xl w-full mx-auto px-6 py-24 scale-90 md:scale-100 max-h-full overflow-y-auto pointer-events-auto scrollbar-hide">
             <div className="text-center mb-12 pt-4">
               <h2 className="text-4xl md:text-6xl font-bold mb-4 text-gradient">
                 Meet Our People
@@ -491,179 +635,169 @@ export default function Home() {
                 Executive Board
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-3xl">
-                    👨‍💼
+                {executiveBoard.map((person, index) => (
+                  <div key={index} className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                    <div className="w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-500">
+                      <Image
+                        src={`/${person.picture}`}
+                        alt={person.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <h4 className="font-bold text-base mb-1">{person.name}</h4>
+                    <p className="text-primary-600 font-semibold text-sm mb-1">{person.title}</p>
+                    <p className="text-gray-500 text-xs">{person.school}</p>
                   </div>
-                  <h4 className="font-bold text-base mb-1">James Chen</h4>
-                  <p className="text-primary-600 font-semibold text-sm mb-1">President</p>
-                  <p className="text-gray-500 text-xs">Class of 2025</p>
-                </div>
-                
-                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-3xl">
-                    👩‍💼
-                  </div>
-                  <h4 className="font-bold text-base mb-1">Sarah Liu</h4>
-                  <p className="text-primary-600 font-semibold text-sm mb-1">Vice President</p>
-                  <p className="text-gray-500 text-xs">Class of 2025</p>
-                </div>
-                
-                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-primary-500 to-red-500 flex items-center justify-center text-3xl">
-                    👨
-                  </div>
-                  <h4 className="font-bold text-base mb-1">David Wong</h4>
-                  <p className="text-primary-600 font-semibold text-sm mb-1">Treasurer</p>
-                  <p className="text-gray-500 text-xs">Class of 2026</p>
-                </div>
-                
-                <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-accent-500 to-primary-400 flex items-center justify-center text-3xl">
-                    👩
-                  </div>
-                  <h4 className="font-bold text-base mb-1">Emily Zhang</h4>
-                  <p className="text-primary-600 font-semibold text-sm mb-1">Secretary</p>
-                  <p className="text-gray-500 text-xs">Class of 2026</p>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Teams Grid */}
-            <div className="grid md:grid-cols-2 gap-6 mb-12">
-              {/* Events Team */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl">
-                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
-                  Events Team
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center text-xl flex-shrink-0">
-                      👨‍🎓
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Michael Wang</h4>
-                      <p className="text-xs text-primary-600">Events Director</p>
-                      <p className="text-xs text-gray-500">Class of 2025</p>
-                    </div>
+            {/* Teams Grid and Senior Advisor */}
+            <div className="grid lg:grid-cols-3 gap-6 mb-12">
+              {/* Teams Grid */}
+              <div className="lg:col-span-2 grid md:grid-cols-2 gap-6">
+                {/* Events Team */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl">
+                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                    Events Team
+                  </h3>
+                  <div className="space-y-3">
+                    {eventsTeam.map((person, index) => (
+                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-400 flex-shrink-0">
+                          <Image
+                            src={`/${person.picture}`}
+                            alt={person.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <p className="text-xs text-primary-600">{person.title}</p>
+                          <p className="text-xs text-gray-500">{person.school}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-400 to-primary-400 flex items-center justify-center text-xl flex-shrink-0">
-                      👩‍🎓
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Lisa Chen</h4>
-                      <p className="text-xs text-primary-600">Events Coordinator</p>
-                      <p className="text-xs text-gray-500">Class of 2026</p>
-                    </div>
+                </div>
+
+                {/* Logistics Team */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl">
+                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                    Logistics Team
+                  </h3>
+                  <div className="space-y-3">
+                    {logisticsTeam.map((person, index) => (
+                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-red-400 to-primary-500 flex-shrink-0">
+                          <Image
+                            src={`/${person.picture}`}
+                            alt={person.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <p className="text-xs text-primary-600">{person.title}</p>
+                          <p className="text-xs text-gray-500">{person.school}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Graphics Team */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl">
+                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                    Graphics Team
+                  </h3>
+                  <div className="space-y-3">
+                    {graphicsTeam.map((person, index) => (
+                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-accent-500 to-red-400 flex-shrink-0">
+                          {noPicturePeople.has(person.name) ? (
+                            <div className="w-full h-full flex items-center justify-center text-2xl">
+                              👤
+                            </div>
+                          ) : (
+                            <Image
+                              src={`/${person.picture}`}
+                              alt={person.name}
+                              fill
+                              className="object-cover"
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <p className="text-xs text-primary-600">{person.title}</p>
+                          <p className="text-xs text-gray-500">{person.school}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Marketing Team */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl">
+                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                    Marketing Team
+                  </h3>
+                  <div className="space-y-3">
+                    {marketingTeam.map((person, index) => (
+                      <div key={index} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="w-12 h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-500 to-accent-500 flex-shrink-0">
+                          <Image
+                            src={`/${person.picture}`}
+                            alt={person.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm">{person.name}</h4>
+                          <p className="text-xs text-primary-600">{person.title}</p>
+                          <p className="text-xs text-gray-500">{person.school}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Logistics Team */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl">
-                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
-                  Logistics Team
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-primary-500 flex items-center justify-center text-xl flex-shrink-0">
-                      👨‍💻
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Kevin Lin</h4>
-                      <p className="text-xs text-primary-600">Logistics Head</p>
-                      <p className="text-xs text-gray-500">Class of 2025</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-accent-400 flex items-center justify-center text-xl flex-shrink-0">
-                      👩‍💻
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Amy Xu</h4>
-                      <p className="text-xs text-primary-600">Operations Manager</p>
-                      <p className="text-xs text-gray-500">Class of 2026</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Graphics Team */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl">
-                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
-                  Graphics Team
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-500 to-red-400 flex items-center justify-center text-xl flex-shrink-0">
-                      👨‍🎨
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Jason Zhou</h4>
-                      <p className="text-xs text-primary-600">Design Lead</p>
-                      <p className="text-xs text-gray-500">Class of 2025</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-red-500 flex items-center justify-center text-xl flex-shrink-0">
-                      👩‍🎨
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Jessica Yang</h4>
-                      <p className="text-xs text-primary-600">Graphic Designer</p>
-                      <p className="text-xs text-gray-500">Class of 2027</p>
-                    </div>
+              {/* Senior Advisor */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-2xl p-6 shadow-xl h-full">
+                  <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
+                    Senior Advisors
+                  </h3>
+                  <div className="space-y-6">
+                    {seniorAdvisors.map((person, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                        <div className="w-24 h-24 mb-4 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-600 to-accent-600">
+                          {noPicturePeople.has(person.name) ? (
+                            <div className="w-full h-full flex items-center justify-center text-5xl">
+                              👤
+                            </div>
+                          ) : (
+                            <Image
+                              src={`/${person.picture}`}
+                              alt={person.name}
+                              fill
+                              className="object-cover"
+                            />
+                          )}
+                        </div>
+                        <h4 className="font-bold text-lg mb-1">{person.name}</h4>
+                        <p className="text-primary-600 font-semibold mb-1">{person.title}</p>
+                        <p className="text-gray-500 text-sm">{person.school}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-
-              {/* Marketing Team */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl">
-                <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
-                  Marketing Team
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-xl flex-shrink-0">
-                      👨‍💼
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Ryan Lee</h4>
-                      <p className="text-xs text-primary-600">Marketing Director</p>
-                      <p className="text-xs text-gray-500">Class of 2025</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-400 to-primary-600 flex items-center justify-center text-xl flex-shrink-0">
-                      👩‍💼
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Sophia Huang</h4>
-                      <p className="text-xs text-primary-600">Social Media Lead</p>
-                      <p className="text-xs text-gray-500">Class of 2026</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Senior Advisor */}
-            <div className="text-center pb-8">
-              <h3 className="text-2xl font-bold mb-6 text-gray-800">
-                Senior Advisor
-              </h3>
-              <div className="inline-block bg-white rounded-2xl p-6 shadow-xl">
-                <div className="w-24 h-24 mx-auto mb-3 rounded-full bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-4xl">
-                  👨‍🏫
-                </div>
-                <h4 className="font-bold text-xl mb-1">Professor Wei Chen</h4>
-                <p className="text-primary-600 font-semibold mb-1">Senior Advisor</p>
-                <p className="text-gray-500 text-sm">Faculty Mentor</p>
               </div>
             </div>
           </div>
@@ -684,43 +818,120 @@ export default function Home() {
             </p>
 
             <div className="grid md:grid-cols-3 gap-8 mb-12 max-w-4xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-                <div className="text-5xl mb-4">📧</div>
-                <h3 className="text-xl font-bold mb-2">Email Us</h3>
-                <p className="text-white/80">mei.society@nyu.edu</p>
-              </div>
+              <a 
+                href="https://www.instagram.com/nyucms/?hl=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative rounded-2xl overflow-hidden h-64 hover:scale-105 transition-all cursor-pointer shadow-xl"
+              >
+                <div className="absolute inset-0">
+                  <Image
+                    src="/instagram.png"
+                    alt="Instagram"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-6">
+                  <div>
+                    <h3 className="text-xl font-bold mb-1 text-center text-white">Instagram</h3>
+                    <p className="text-white/90 text-center">@nyucms</p>
+                  </div>
+                </div>
+              </a>
 
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-                <div className="text-5xl mb-4">📱</div>
-                <h3 className="text-xl font-bold mb-2">Follow Us</h3>
-                <p className="text-white/80">@nyumeisociety</p>
-              </div>
+              <a 
+                href="https://www.tiktok.com/@cms.nyu?lang=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative rounded-2xl overflow-hidden h-64 hover:scale-105 transition-all cursor-pointer shadow-xl"
+              >
+                <div className="absolute inset-0">
+                  <Image
+                    src="/tiktok.png"
+                    alt="TikTok"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-6">
+                  <div>
+                    <h3 className="text-xl font-bold mb-1 text-center text-white">TikTok</h3>
+                    <p className="text-white/90 text-center">@cms.nyu</p>
+                  </div>
+                </div>
+              </a>
 
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-                <div className="text-5xl mb-4">📍</div>
-                <h3 className="text-xl font-bold mb-2">Location</h3>
-                <p className="text-white/80">NYU Campus, NYC</p>
-              </div>
+              <a 
+                href="https://engage.nyu.edu/organization/chinese-mei-society-all-university"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative rounded-2xl overflow-hidden h-64 hover:scale-105 transition-all cursor-pointer shadow-xl"
+              >
+                <div className="absolute inset-0">
+                  <Image
+                    src="/engage.png"
+                    alt="NYU Engage"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-6">
+                  <div>
+                    <h3 className="text-xl font-bold mb-1 text-center text-white">NYU Engage</h3>
+                    <p className="text-white/90 text-center">NYU Engage</p>
+                  </div>
+                </div>
+              </a>
             </div>
 
-            <button className="px-12 py-6 bg-white text-primary-600 rounded-full text-xl font-bold hover:scale-105 transition-all shadow-2xl pointer-events-auto">
+            <a 
+              href="mailto:cms.nyu@gmail.com"
+              className="px-12 py-6 bg-white text-primary-600 rounded-full text-xl font-bold hover:scale-105 transition-all shadow-2xl pointer-events-auto inline-block"
+            >
               Get in Touch
-            </button>
+            </a>
 
-            <div className="mt-16 pt-8 border-t border-white/20">
-              <p className="text-white/60">
-                © 2024 NYU Chinese Mei Society. All rights reserved.
+            <div className="mt-16 pt-8 border-t border-white/20 space-y-6">
+              {/* Self Plug */}
+              <div className="flex items-center justify-center gap-4">
+                <span className="text-white/70 text-sm md:text-base">Website built by</span>
+                <span className="text-white font-semibold text-base md:text-lg">Matt Cao</span>
+                <span className="text-white/70 text-sm md:text-base">reach me here: </span>
+                <a 
+                  href="https://www.linkedin.com/in/caomatt" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-block hover:scale-110 transition-all duration-300 pointer-events-auto"
+                  aria-label="Matt Cao's LinkedIn"
+                >
+                  <svg 
+                    className="w-8 h-8 text-white" 
+                    fill="currentColor" 
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                </a>
+              </div>
+              
+              {/* Copyright */}
+              <p className="text-white/40 text-sm text-center pb-6">
+                © 2025 NYU Chinese Mei Society. All rights reserved.
               </p>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-          <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center">
-            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2"></div>
+        {typeof window !== 'undefined' && window.location.pathname === '/' && showScrollIndicator && (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center">
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2"></div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   )
