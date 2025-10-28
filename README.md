@@ -1,6 +1,6 @@
 # NYU Chinese Mei Society Website
 
-A modern, sleek single-page application website for the NYU Chinese Mei Society with Apple-inspired scroll animations.
+A modern, sleek single-page application website for the NYU Chinese Mei Society with creative scroll animations.
 
 ## Features
 
@@ -56,18 +56,6 @@ npm start
 
 1. **Hero Section** - Eye-catching landing with animated title and CTA buttons
 2. **About Section** - Mission and activities overview
-3. **Events Section** - Upcoming cultural events and workshops
+3. **Events Section** - Previous cultural events and workshops
 4. **Members Section** - Team member showcase
 5. **Contact Section** - Join the community form and contact information
-
-## Customization
-
-The website can be easily customized:
-
-- Colors: Edit `tailwind.config.js` to change the primary and accent colors
-- Content: Modify the content in `app/page.tsx`
-- Animations: Adjust GSAP animations in the `useEffect` hook
-
-## License
-
-This project is private and belongs to NYU Chinese Mei Society.
