@@ -371,7 +371,7 @@ export default function Home() {
   return (
     <>
       {/* Scrollable spacer */}
-      <div ref={mainRef} style={{ height: '900vh' }}></div>
+      <div ref={mainRef} style={{ height: '1100vh' }}></div>
 
       {/* Fixed viewport container */}
       <div className="fixed inset-0 overflow-hidden">
