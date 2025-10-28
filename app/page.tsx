@@ -76,6 +76,8 @@ export default function Home() {
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [selectedTeam, setSelectedTeam] = useState('Executive Board')
+  const [peopleCarouselIndex, setPeopleCarouselIndex] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -141,6 +143,11 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
+  // Reset people carousel when team changes
+  useEffect(() => {
+    setPeopleCarouselIndex(0)
+  }, [selectedTeam])
+
   const scrollToSection = (section: number) => {
     // Target positions where each section is fully visible and stable
     const percentages = [5, 30, 62, 78, 90]
@@ -148,6 +155,28 @@ export default function Home() {
     const targetY = (height * percentages[section - 1]) / 100
     window.scrollTo({ top: targetY, behavior: 'smooth' })
   }
+
+  // Helper function to get current team members
+  const getCurrentTeamMembers = () => {
+    switch (selectedTeam) {
+      case 'Executive Board':
+        return executiveBoard
+      case 'Events':
+        return eventsTeam
+      case 'Logistics':
+        return logisticsTeam
+      case 'Graphics':
+        return graphicsTeam
+      case 'Marketing':
+        return marketingTeam
+      case 'Senior Advisors':
+        return seniorAdvisors
+      default:
+        return executiveBoard
+    }
+  }
+
+  const currentTeamMembers = getCurrentTeamMembers()
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50
@@ -575,12 +604,13 @@ export default function Home() {
 
             {/* Carousel Container */}
             <div className="flex flex-col items-center">
-              <div className="relative max-w-5xl w-full">
+              <div className="relative inline-block">
                 {/* Main Image Display */}
                 <div 
-                  className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 w-full touch-pan-y"
+                  className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 touch-pan-y"
                   style={{
                     aspectRatio: aspectRatios[currentSlide] || 16/9,
+                    width: 'min(90vw, 1200px)',
                     maxHeight: '600px'
                   }}
                   onTouchStart={onTouchStart}
@@ -652,7 +682,7 @@ export default function Home() {
           className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary-50 pointer-events-none flex items-center justify-center overflow-hidden"
         >
           <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-12 sm:py-24 scale-90 md:scale-100 max-h-full overflow-y-auto pointer-events-auto scrollbar-hide">
-            <div className="text-center mb-8 sm:mb-12 pt-2 sm:pt-4">
+            <div className="text-center mb-6 sm:mb-8 pt-2 sm:pt-4">
               <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-3 sm:mb-4 text-gradient">
                 Meet Our People
               </h2>
@@ -661,177 +691,139 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Executive Board */}
-            <div className="mb-8 sm:mb-12">
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center text-gray-800">
-                Executive Board
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                {executiveBoard.map((person, index) => (
-                  <div key={index} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg text-center">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-500">
-                      <Image
-                        src={`/${person.picture}`}
-                        alt={person.name}
-                        fill
-                        className="object-cover"
-                      />
+            {/* Team Selection Pills */}
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6 sm:mb-8">
+              {['Executive Board', 'Events', 'Logistics', 'Graphics', 'Marketing', 'Senior Advisors'].map((team) => (
+                <button
+                  key={team}
+                  onClick={() => setSelectedTeam(team)}
+                  className={`px-4 py-2 sm:px-6 sm:py-3 rounded-full font-semibold text-xs sm:text-sm transition-all duration-300 ${
+                    selectedTeam === team
+                      ? 'bg-primary-600 text-white shadow-lg scale-105'
+                      : 'bg-white text-gray-700 hover:bg-primary-50 hover:scale-102'
+                  }`}
+                >
+                  {team}
+                </button>
+              ))}
+            </div>
+
+            {/* Member Carousel */}
+            {currentTeamMembers.length > 0 && (
+              <div className="relative max-w-4xl mx-auto">
+                {/* Main Carousel Container */}
+                <div 
+                  className="relative bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl transition-all duration-500"
+                  onTouchStart={onTouchStart}
+                  onTouchMove={onTouchMove}
+                  onTouchEnd={() => {
+                    if (!touchStart || !touchEnd) return
+                    const distance = touchStart - touchEnd
+                    const isLeftSwipe = distance > minSwipeDistance
+                    const isRightSwipe = distance < -minSwipeDistance
+                    
+                    if (isLeftSwipe && peopleCarouselIndex < currentTeamMembers.length - 1) {
+                      setPeopleCarouselIndex(peopleCarouselIndex + 1)
+                    }
+                    if (isRightSwipe && peopleCarouselIndex > 0) {
+                      setPeopleCarouselIndex(peopleCarouselIndex - 1)
+                    }
+                  }}
+                >
+                  {currentTeamMembers.map((person, index) => (
+                    <div
+                      key={index}
+                      className={`transition-opacity duration-500 flex flex-col items-center ${
+                        peopleCarouselIndex === index ? 'opacity-100' : 'opacity-0 absolute inset-0'
+                      }`}
+                    >
+                      {/* Profile Picture */}
+                      <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 mb-6 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-500 shadow-xl">
+                        {noPicturePeople.has(person.name) ? (
+                          <div className="w-full h-full flex items-center justify-center text-6xl sm:text-7xl md:text-8xl">
+                            👤
+                          </div>
+                        ) : (
+                          <Image
+                            src={`/${person.picture}`}
+                            alt={person.name}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+
+                      {/* Bio Card */}
+                      <div className="text-center">
+                        <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 text-gray-900">
+                          {person.name}
+                        </h3>
+                        <p className="text-primary-600 font-semibold text-lg sm:text-xl md:text-2xl mb-3 sm:mb-4">
+                          {person.title}
+                        </p>
+                        <p className="text-gray-600 text-base sm:text-lg md:text-xl">
+                          {person.school}
+                        </p>
+                      </div>
                     </div>
-                    <h4 className="font-bold text-sm sm:text-base mb-1">{person.name}</h4>
-                    <p className="text-primary-600 font-semibold text-xs sm:text-sm mb-1">{person.title}</p>
-                    <p className="text-gray-500 text-xs">{person.school}</p>
+                  ))}
+
+                  {/* Navigation Arrows */}
+                  {currentTeamMembers.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setPeopleCarouselIndex(Math.max(0, peopleCarouselIndex - 1))}
+                        disabled={peopleCarouselIndex === 0}
+                        className={`absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 z-10 ${
+                          peopleCarouselIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        aria-label="Previous member"
+                      >
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      
+                      <button
+                        onClick={() => setPeopleCarouselIndex(Math.min(currentTeamMembers.length - 1, peopleCarouselIndex + 1))}
+                        disabled={peopleCarouselIndex === currentTeamMembers.length - 1}
+                        className={`absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 z-10 ${
+                          peopleCarouselIndex === currentTeamMembers.length - 1 ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        aria-label="Next member"
+                      >
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Dots Indicator */}
+                {currentTeamMembers.length > 1 && (
+                  <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
+                    {currentTeamMembers.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setPeopleCarouselIndex(index)}
+                        className={`transition-all duration-300 rounded-full ${
+                          peopleCarouselIndex === index
+                            ? 'w-8 sm:w-12 h-2 sm:h-3 bg-primary-600'
+                            : 'w-2 sm:w-3 h-2 sm:h-3 bg-gray-300 hover:bg-gray-400'
+                        }`}
+                        aria-label={`Go to member ${index + 1}`}
+                      />
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {/* Current Index Indicator */}
+                <p className="text-center mt-4 text-sm sm:text-base text-gray-600">
+                  {peopleCarouselIndex + 1} / {currentTeamMembers.length}
+                </p>
               </div>
-            </div>
-
-            {/* Teams Grid and Senior Advisor */}
-            <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
-              {/* Teams Grid */}
-              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {/* Events Team */}
-                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
-                    Events Team
-                  </h3>
-                  <div className="space-y-2 sm:space-y-3">
-                    {eventsTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-400 to-accent-400 flex-shrink-0">
-                          <Image
-                            src={`/${person.picture}`}
-                            alt={person.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
-                          <p className="text-xs text-primary-600">{person.title}</p>
-                          <p className="text-xs text-gray-500">{person.school}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Logistics Team */}
-                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
-                    Logistics Team
-                  </h3>
-                  <div className="space-y-2 sm:space-y-3">
-                    {logisticsTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-red-400 to-primary-500 flex-shrink-0">
-                          <Image
-                            src={`/${person.picture}`}
-                            alt={person.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
-                          <p className="text-xs text-primary-600">{person.title}</p>
-                          <p className="text-xs text-gray-500">{person.school}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Graphics Team */}
-                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
-                    Graphics Team
-                  </h3>
-                  <div className="space-y-2 sm:space-y-3">
-                    {graphicsTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-accent-500 to-red-400 flex-shrink-0">
-                          {noPicturePeople.has(person.name) ? (
-                            <div className="w-full h-full flex items-center justify-center text-xl sm:text-2xl">
-                              👤
-                            </div>
-                          ) : (
-                            <Image
-                              src={`/${person.picture}`}
-                              alt={person.name}
-                              fill
-                              className="object-cover"
-                            />
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
-                          <p className="text-xs text-primary-600">{person.title}</p>
-                          <p className="text-xs text-gray-500">{person.school}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Marketing Team */}
-                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
-                    Marketing Team
-                  </h3>
-                  <div className="space-y-2 sm:space-y-3">
-                    {marketingTeam.map((person, index) => (
-                      <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-500 to-accent-500 flex-shrink-0">
-                          <Image
-                            src={`/${person.picture}`}
-                            alt={person.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs sm:text-sm">{person.name}</h4>
-                          <p className="text-xs text-primary-600">{person.title}</p>
-                          <p className="text-xs text-gray-500">{person.school}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Senior Advisor */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl h-full">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center text-gray-800">
-                    Senior Advisors
-                  </h3>
-                  <div className="space-y-4 sm:space-y-6">
-                    {seniorAdvisors.map((person, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 mb-3 sm:mb-4 rounded-full overflow-hidden relative bg-gradient-to-br from-primary-600 to-accent-600">
-                          {noPicturePeople.has(person.name) ? (
-                            <div className="w-full h-full flex items-center justify-center text-4xl sm:text-5xl">
-                              👤
-                            </div>
-                          ) : (
-                            <Image
-                              src={`/${person.picture}`}
-                              alt={person.name}
-                              fill
-                              className="object-cover"
-                            />
-                          )}
-                        </div>
-                        <h4 className="font-bold text-base sm:text-lg mb-1">{person.name}</h4>
-                        <p className="text-primary-600 font-semibold text-sm sm:text-base mb-1">{person.title}</p>
-                        <p className="text-gray-500 text-xs sm:text-sm">{person.school}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -840,22 +832,22 @@ export default function Home() {
           ref={section5Ref}
           className="absolute inset-0 bg-gradient-to-br from-primary-600 to-accent-600 text-white pointer-events-none overflow-y-auto scrollbar-hide"
         >
-          <div className="min-h-full flex items-start md:items-center justify-center py-16 sm:py-20">
+          <div className="min-h-full flex items-start md:items-center justify-center py-6 sm:py-16 md:py-20">
             <div className="max-w-5xl w-full text-center px-4 sm:px-6">
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-5xl md:text-7xl font-bold mb-3 sm:mb-6 md:mb-8">
               Join Our Community
             </h2>
-            <p className="text-base sm:text-xl md:text-2xl mb-8 sm:mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed px-4">
+            <p className="text-sm sm:text-xl md:text-2xl mb-4 sm:mb-8 md:mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed px-4">
               Whether you're interested in Chinese culture or simply want to make
               new friends, we welcome you to join NYU Chinese Mei Society.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-12 max-w-4xl mx-auto">
               <a 
                 href="https://www.instagram.com/nyucms/?hl=en"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-48 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -865,10 +857,10 @@ export default function Home() {
                     className="object-cover"
                   />
                 </div>
-                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 sm:pb-6">
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-3 sm:pb-4 md:pb-6">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold mb-1 text-center text-white">Instagram</h3>
-                    <p className="text-sm sm:text-base text-white/90 text-center">@nyucms</p>
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold mb-0.5 sm:mb-1 text-center text-white">Instagram</h3>
+                    <p className="text-xs sm:text-sm md:text-base text-white/90 text-center">@nyucms</p>
                   </div>
                 </div>
               </a>
@@ -877,7 +869,7 @@ export default function Home() {
                 href="https://www.tiktok.com/@cms.nyu?lang=en"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-48 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -887,10 +879,10 @@ export default function Home() {
                     className="object-cover"
                   />
                 </div>
-                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 sm:pb-6">
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-3 sm:pb-4 md:pb-6">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold mb-1 text-center text-white">TikTok</h3>
-                    <p className="text-sm sm:text-base text-white/90 text-center">@cms.nyu</p>
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold mb-0.5 sm:mb-1 text-center text-white">TikTok</h3>
+                    <p className="text-xs sm:text-sm md:text-base text-white/90 text-center">@cms.nyu</p>
                   </div>
                 </div>
               </a>
@@ -899,7 +891,7 @@ export default function Home() {
                 href="https://engage.nyu.edu/organization/chinese-mei-society-all-university"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-48 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -909,10 +901,10 @@ export default function Home() {
                     className="object-cover"
                   />
                 </div>
-                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 sm:pb-6">
+                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-3 sm:pb-4 md:pb-6">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold mb-1 text-center text-white">NYU Engage</h3>
-                    <p className="text-sm sm:text-base text-white/90 text-center">NYU Engage</p>
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold mb-0.5 sm:mb-1 text-center text-white">NYU Engage</h3>
+                    <p className="text-xs sm:text-sm md:text-base text-white/90 text-center">NYU Engage</p>
                   </div>
                 </div>
               </a>
@@ -920,16 +912,16 @@ export default function Home() {
 
             <a 
               href="mailto:cms.nyu@gmail.com"
-              className="px-8 py-4 sm:px-12 sm:py-6 bg-white text-primary-600 rounded-full text-base sm:text-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl pointer-events-auto inline-block"
+              className="px-6 py-3 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-white text-primary-600 rounded-full text-sm sm:text-base md:text-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl pointer-events-auto inline-block mb-4 sm:mb-0"
             >
               Get in Touch
             </a>
 
-            <div className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-white/20 space-y-4 sm:space-y-6">
-              <div className="flex flex-row sm:flex-row items-center justify-center gap-2 sm:gap-4">
-                <span className="text-white/70 text-xs sm:text-sm md:text-base">Website built by</span>
-                <span className="text-white font-semibold text-sm sm:text-base md:text-lg">Matt Cao</span>
-                <span className="text-white/70 text-xs sm:text-sm md:text-base">reach me here: </span>
+            <div className="mt-6 sm:mt-12 md:mt-16 pt-4 sm:pt-6 md:pt-8 border-t border-white/20 space-y-2 sm:space-y-4 md:space-y-6">
+              <div className="flex flex-row sm:flex-row items-center justify-center gap-1 sm:gap-2 md:gap-4">
+                <span className="text-white/70 text-[10px] sm:text-xs md:text-sm lg:text-base">Website built by</span>
+                <span className="text-white font-semibold text-xs sm:text-sm md:text-base lg:text-lg">Matt Cao</span>
+                <span className="text-white/70 text-[10px] sm:text-xs md:text-sm lg:text-base">reach me here: </span>
                 <a 
                   href="https://www.linkedin.com/in/caomatt" 
                   target="_blank" 
@@ -938,7 +930,7 @@ export default function Home() {
                   aria-label="Matt Cao's LinkedIn"
                 >
                   <svg 
-                    className="w-6 h-6 sm:w-8 sm:h-8 text-white" 
+                    className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" 
                     fill="currentColor" 
                     viewBox="0 0 24 24"
                     aria-hidden="true"
