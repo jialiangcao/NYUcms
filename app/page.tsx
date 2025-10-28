@@ -78,6 +78,7 @@ export default function Home() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [selectedTeam, setSelectedTeam] = useState('Executive Board')
   const [peopleCarouselIndex, setPeopleCarouselIndex] = useState(0)
+  const [activeSection, setActiveSection] = useState(1)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -101,6 +102,20 @@ export default function Home() {
         setShowScrollIndicator(false)
       } else {
         setShowScrollIndicator(true)
+      }
+      
+      // Determine active section based on scroll percentage
+      const scrollPercentage = (currentScrollY / maxScroll) * 100
+      if (scrollPercentage < 20) {
+        setActiveSection(1)
+      } else if (scrollPercentage < 50) {
+        setActiveSection(2)
+      } else if (scrollPercentage < 70) {
+        setActiveSection(3)
+      } else if (scrollPercentage < 85) {
+        setActiveSection(4)
+      } else {
+        setActiveSection(5)
       }
       
       setLastScrollY(currentScrollY)
@@ -490,6 +505,10 @@ export default function Home() {
         <div
           ref={section1Ref}
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white via-primary-50 to-accent-50"
+          style={{ 
+            zIndex: activeSection === 1 ? 10 : 1,
+            pointerEvents: activeSection === 1 ? 'auto' : 'none'
+          }}
         >
           <div className="max-w-5xl w-full text-center px-4 sm:px-6">
             <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-tight">
@@ -525,7 +544,11 @@ export default function Home() {
         {/* Section 2: About - Slides up from bottom, scales down to exit */}
         <div
           ref={section2Ref}
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-white pointer-events-none overflow-y-auto scrollbar-hide"
+          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-white overflow-y-auto scrollbar-hide"
+          style={{ 
+            zIndex: activeSection === 2 ? 10 : 1,
+            pointerEvents: activeSection === 2 ? 'auto' : 'none'
+          }}
         >
           <div className="max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20">
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
@@ -589,9 +612,13 @@ export default function Home() {
         {/* Section 3: Events - Zooms in from center, slides left to exit */}
         <div
           ref={section3Ref}
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white to-accent-50 pointer-events-none"
+          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white to-accent-50"
+          style={{ 
+            zIndex: activeSection === 3 ? 10 : 1,
+            pointerEvents: activeSection === 3 ? 'auto' : 'none'
+          }}
         >
-          <div className="max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20 pointer-events-auto">
+          <div className="max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20">
             <div className="text-center mb-8 sm:mb-12">
               <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 text-gradient">
                 Our Events
@@ -679,9 +706,13 @@ export default function Home() {
         {/* Section 4: People - Rotates in from top */}
         <div
           ref={section4Ref}
-          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary-50 pointer-events-none flex items-center justify-center overflow-hidden"
+          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary-50 flex items-center justify-center overflow-hidden"
+          style={{ 
+            zIndex: activeSection === 4 ? 10 : 1,
+            pointerEvents: activeSection === 4 ? 'auto' : 'none'
+          }}
         >
-          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-12 sm:py-24 scale-90 md:scale-100 max-h-full overflow-y-auto pointer-events-auto scrollbar-hide">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-12 sm:py-24 scale-90 md:scale-100 max-h-full overflow-y-auto scrollbar-hide">
             <div className="text-center mb-6 sm:mb-8 pt-2 sm:pt-4">
               <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-3 sm:mb-4 text-gradient">
                 Meet Our People
@@ -830,7 +861,11 @@ export default function Home() {
         {/* Section 5: Contact - Slides in from right */}
         <div
           ref={section5Ref}
-          className="absolute inset-0 bg-gradient-to-br from-primary-600 to-accent-600 text-white pointer-events-none overflow-y-auto scrollbar-hide"
+          className="absolute inset-0 bg-gradient-to-br from-primary-600 to-accent-600 text-white overflow-y-auto scrollbar-hide"
+          style={{ 
+            zIndex: activeSection === 5 ? 10 : 1,
+            pointerEvents: activeSection === 5 ? 'auto' : 'none'
+          }}
         >
           <div className="min-h-full flex items-start md:items-center justify-center py-6 sm:py-16 md:py-20">
             <div className="max-w-5xl w-full text-center px-4 sm:px-6">
@@ -847,7 +882,7 @@ export default function Home() {
                 href="https://www.instagram.com/nyucms/?hl=en"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-24 sm:h-40 md:h-48 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -869,7 +904,7 @@ export default function Home() {
                 href="https://www.tiktok.com/@cms.nyu?lang=en"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-24 sm:h-40 md:h-48 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -891,7 +926,7 @@ export default function Home() {
                 href="https://engage.nyu.edu/organization/chinese-mei-society-all-university"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-56 md:h-64 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl pointer-events-auto"
+                className="relative rounded-xl sm:rounded-2xl overflow-hidden h-24 sm:h-40 md:h-48 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xl"
               >
                 <div className="absolute inset-0">
                   <Image
@@ -912,7 +947,7 @@ export default function Home() {
 
             <a 
               href="mailto:cms.nyu@gmail.com"
-              className="px-6 py-3 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-white text-primary-600 rounded-full text-sm sm:text-base md:text-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl pointer-events-auto inline-block mb-4 sm:mb-0"
+              className="px-6 py-3 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-white text-primary-600 rounded-full text-sm sm:text-base md:text-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl inline-block mb-4 sm:mb-0"
             >
               Get in Touch
             </a>
@@ -926,7 +961,7 @@ export default function Home() {
                   href="https://www.linkedin.com/in/caomatt" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-block hover:scale-110 active:scale-95 transition-all duration-300 pointer-events-auto"
+                  className="inline-block hover:scale-110 active:scale-95 transition-all duration-300"
                   aria-label="Matt Cao's LinkedIn"
                 >
                   <svg 
